@@ -4,10 +4,6 @@ use rand::seq::SliceRandom;
 use std::f32::consts::SQRT_2;
 use structopt::StructOpt;
 
-// const CHUNK_SIZE: u32 = 1000;
-// const WIDTH: u32 = 5000;
-// const HEIGHT: u32 = 5000;
-
 #[derive(Debug)]
 struct Mathematical2DVector {
     direction_x: f32,
@@ -40,6 +36,9 @@ struct Opt {
 
     #[structopt(short, long, default_value="500", help="The size of the chunks you want to generate. ")]
     chunk_size: u32,
+
+    #[structopt(short, long, default_value="1", help="Number of images to generate.")]
+    number_of_images_to_generate: u32,
 }
 
 fn generate_permutation_table() -> [usize; 512] {
@@ -164,34 +163,44 @@ fn calculate_value_at_coordinates(
 
 fn main() {
     let opt = Opt::from_args();
-
-    let permutation_table = generate_permutation_table();
-
-    if opt.generate_image {
-        let mut image: RgbImage = ImageBuffer::new(opt.width, opt.height);
-
-        for x in 0..opt.width {
-            for y in 0..opt.height {
-                let generated_values_for_coordinates =
-                    ((calculate_value_at_coordinates(x, y, permutation_table, opt.chunk_size) + 1.0) / 2.0)
-                        * 255.0;
-                let generated_values_for_coordinates = generated_values_for_coordinates as u8;
-                *image.get_pixel_mut(x, y) = image::Rgb([
-                    generated_values_for_coordinates,
-                    generated_values_for_coordinates,
-                    generated_values_for_coordinates,
-                ]);
-            }
+    let number_of_iteration: u32 = {
+        match opt.generate_image {
+            true => {
+                opt.number_of_images_to_generate
+            },
+            false => { 1 }
         }
+    };
 
-        image.save("generated_image.png".to_string()).unwrap();
-    } else {
-        for y in 0..opt.height {
+    for i in 0..number_of_iteration {
+        let permutation_table = generate_permutation_table();
+
+        if opt.generate_image {
+            let mut image: RgbImage = ImageBuffer::new(opt.width, opt.height);
+
             for x in 0..opt.width {
-                let generated_values_for_coordinates = calculate_value_at_coordinates(x, y, permutation_table, opt.chunk_size);
-                print!("{}", generated_values_for_coordinates);
+                for y in 0..opt.height {
+                    let generated_values_for_coordinates =
+                        ((calculate_value_at_coordinates(x, y, permutation_table, opt.chunk_size) + 1.0) / 2.0)
+                            * 255.0;
+                    let generated_values_for_coordinates = generated_values_for_coordinates as u8;
+                    *image.get_pixel_mut(x, y) = image::Rgb([
+                        generated_values_for_coordinates,
+                        generated_values_for_coordinates,
+                        generated_values_for_coordinates,
+                    ]);
+                }
             }
-            print!("\n");
+            let image_name = format!("generated_image_{}.png", i);
+            image.save(image_name).unwrap();
+        } else {
+            for y in 0..opt.height {
+                for x in 0..opt.width {
+                    let generated_values_for_coordinates = calculate_value_at_coordinates(x, y, permutation_table, opt.chunk_size);
+                    print!("{} ", generated_values_for_coordinates);
+                }
+                print!("\n");
+            }
         }
     }
 }
