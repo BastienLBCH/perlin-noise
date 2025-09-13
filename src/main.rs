@@ -2,10 +2,11 @@ use image::{ImageBuffer, RgbImage};
 use rand::rng;
 use rand::seq::SliceRandom;
 use std::f32::consts::SQRT_2;
+use structopt::StructOpt;
 
-const CHUNK_SIZE: u32 = 1000;
-const WIDTH: u32 = 5000;
-const HEIGHT: u32 = 5000;
+// const CHUNK_SIZE: u32 = 1000;
+// const WIDTH: u32 = 5000;
+// const HEIGHT: u32 = 5000;
 
 #[derive(Debug)]
 struct Mathematical2DVector {
@@ -22,6 +23,23 @@ impl Mathematical2DVector {
     fn compute_dot_product(&self, other_vector: &Mathematical2DVector) -> f32 {
         self.direction_x * other_vector.direction_x + self.direction_y * other_vector.direction_y
     }
+}
+
+
+#[derive(Debug, StructOpt)]
+#[structopt(name = "perlin-noise", about = "I wanted to understand the Perlin Noise Algorithm")]
+struct Opt {
+    #[structopt(short, long, help="Put this flag to generate a black and white image instead of numeric values")]
+    generate_image: bool,
+
+    #[structopt(long, default_value="1000", help="The amount of values you want to generate on the X axis")]
+    width: u32,
+
+    #[structopt(long, default_value="1000", help="The amount of values you want to generate on the Y axis")]
+    height: u32,
+
+    #[structopt(short, long, default_value="500", help="The size of the chunks you want to generate. ")]
+    chunk_size: u32,
 }
 
 fn generate_permutation_table() -> [usize; 512] {
@@ -85,8 +103,6 @@ fn calculate_value_at_coordinates(
     permutation_table: [usize; 512],
     chunk_size: u32,
 ) -> f32 {
-    // let should_log = x == 0 && y == 0 || x % CHUNK_SIZE == 0 && y % CHUNK_SIZE == 0 || x == WIDTH && y == HEIGHT;
-    let should_log = false;
     let x = x as f32 / chunk_size as f32;
     let y = y as f32 / chunk_size as f32;
 
@@ -147,26 +163,35 @@ fn calculate_value_at_coordinates(
 }
 
 fn main() {
+    let opt = Opt::from_args();
+
     let permutation_table = generate_permutation_table();
 
-    let mut image: RgbImage = ImageBuffer::new(WIDTH, HEIGHT);
+    if opt.generate_image {
+        let mut image: RgbImage = ImageBuffer::new(opt.width, opt.height);
 
-    for x in 0..WIDTH {
-        for y in 0..HEIGHT {
-            // let should_log = x == 0 && y == 0 || x % CHUNK_SIZE == 0 && y % CHUNK_SIZE == 0 || x == WIDTH && y == HEIGHT;
-            let should_log = false;
+        for x in 0..opt.width {
+            for y in 0..opt.height {
+                let generated_values_for_coordinates =
+                    ((calculate_value_at_coordinates(x, y, permutation_table, opt.chunk_size) + 1.0) / 2.0)
+                        * 255.0;
+                let generated_values_for_coordinates = generated_values_for_coordinates as u8;
+                *image.get_pixel_mut(x, y) = image::Rgb([
+                    generated_values_for_coordinates,
+                    generated_values_for_coordinates,
+                    generated_values_for_coordinates,
+                ]);
+            }
+        }
 
-            let generated_values_for_coordinates =
-                ((calculate_value_at_coordinates(x, y, permutation_table, CHUNK_SIZE) + 1.0) / 2.0)
-                    * 255.0;
-            let generated_values_for_coordinates = generated_values_for_coordinates as u8;
-            *image.get_pixel_mut(x, y) = image::Rgb([
-                generated_values_for_coordinates,
-                generated_values_for_coordinates,
-                generated_values_for_coordinates,
-            ]);
+        image.save("generated_image.png".to_string()).unwrap();
+    } else {
+        for y in 0..opt.height {
+            for x in 0..opt.width {
+                let generated_values_for_coordinates = calculate_value_at_coordinates(x, y, permutation_table, opt.chunk_size);
+                print!("{}", generated_values_for_coordinates);
+            }
+            print!("\n");
         }
     }
-
-    image.save("generated_image.png".to_string()).unwrap();
 }
