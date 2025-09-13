@@ -102,11 +102,6 @@ fn calculate_value_at_coordinates(
     let y_bottom = (y_top + 1) & 255;
 
     // Get corners values from permutation table
-    // let value_for_top_left_corner = permutation_table[permutation_table[x_left] + y_bottom];
-    // let value_for_top_right_corner = permutation_table[permutation_table[x_right] + y_bottom];
-    // let value_for_bottom_right_corner = permutation_table[permutation_table[x_right] + y_top];
-    // let value_for_bottom_left_corner = permutation_table[permutation_table[x_left] + y_top];
-
     let value_for_top_left_corner = permutation_table[permutation_table[x_left] + y_top];
     let value_for_top_right_corner = permutation_table[permutation_table[x_right] + y_top];
     let value_for_bottom_right_corner = permutation_table[permutation_table[x_right] + y_bottom];
@@ -120,15 +115,11 @@ fn calculate_value_at_coordinates(
     let top_right_corner_vector = get_corner_vector(value_for_top_right_corner);
 
     // Get vectors from coordinates to each corner
-    // let vector_to_bottom_left = Mathematical2DVector::new(x_decimal_part, y_decimal_part);
-    // let vector_to_bottom_right = Mathematical2DVector::new(x_decimal_part - 1.0, y_decimal_part);
-    // let vector_to_top_left = Mathematical2DVector::new(x_decimal_part, y_decimal_part - 1.0);
-    // let vector_to_top_right = Mathematical2DVector::new(x_decimal_part - 1.0, y_decimal_part - 1.0);
-
-    let vector_to_top_left = Mathematical2DVector::new(-x_decimal_part, y_decimal_part);
-    let vector_to_top_right = Mathematical2DVector::new(1.0 - x_decimal_part, y_decimal_part);
+    let vector_to_top_left = Mathematical2DVector::new(-x_decimal_part, -y_decimal_part);
+    let vector_to_top_right = Mathematical2DVector::new(1.0 - x_decimal_part, -y_decimal_part);
     let vector_to_bottom_right = Mathematical2DVector::new(1.0 - x_decimal_part, 1.0 - y_decimal_part);
     let vector_to_bottom_left = Mathematical2DVector::new(-x_decimal_part, 1.0 - y_decimal_part);
+
 
     // Compute dot product of vectors
     let dot_product_top_left = vector_to_top_left.compute_dot_product(&top_left_corner_vector);
